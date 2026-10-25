@@ -1,0 +1,35 @@
+services:
+  mysql-quiz-db:
+    image: mysql:8.0
+    container_name: mysql-quiz-db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: quizdb
+    ports:
+      - "3307:3306"
+    restart: unless-stopped
+    networks:
+      - quiz-net
+
+  quiz-portal-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: quiz-portal:local
+    container_name: quiz-portal-app
+    environment:
+      DB_URL: "jdbc:mysql://mysql-quiz-db:3306/quizdb?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true"
+      DB_USER: root
+      DB_PASS: rootpassword
+      APP_VERSION: v1.0-docker
+    ports:
+      - "8085:8080"
+    restart: unless-stopped
+    depends_on:
+      - mysql-quiz-db
+    networks:
+      - quiz-net
+
+networks:
+  quiz-net:
+    name: quiz-net
