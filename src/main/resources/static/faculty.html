@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty &amp; Controller Console - EduPulse Assessment Cloud</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .console-nav-pills {
+            display: flex;
+            background-color: var(--bg-canvas);
+            border-radius: var(--radius-pill);
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .console-pill-btn {
+            background: none;
+            border: none;
+            padding: 8px 20px;
+            border-radius: var(--radius-pill);
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .console-pill-btn.active {
+            background-color: var(--bg-surface);
+            color: var(--primary);
+            box-shadow: 0 4px 12px rgba(15, 60, 201, 0.08);
+        }
+
+        .console-panel {
+            display: none;
+        }
+
+        .console-panel.active {
+            display: block;
+        }
+
+        .metrics-overview-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .metric-card-box {
+            background-color: var(--bg-surface);
+            border-radius: var(--radius-card);
+            padding: 26px 30px;
+            box-shadow: var(--shadow-card);
+        }
+
+        .metric-card-number {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -0.02em;
+            margin-bottom: 4px;
+        }
+
+        .metric-card-caption {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+
+<div class="site-wrap">
+    <!-- Top Bar -->
+    <header class="nav-header">
+        <div class="brand-block">
+            <div class="brand-dot"></div>
+            <span class="brand-text">EduPulse Assessment Cloud &bull; Controller Console</span>
+        </div>
+        <div class="nav-links">
+            <div class="console-nav-pills">
+                <button class="console-pill-btn active" id="btnTabBank" onclick="switchConsoleTab('bank')">Question Bank</button>
+                <button class="console-pill-btn" id="btnTabMerit" onclick="switchConsoleTab('merit')">Candidate Audit &amp; Merit</button>
+            </div>
+            <span class="pill-badge pill-version" id="facultyVersionBadge">Release: v1.0</span>
+            <a href="index.html" class="nav-link">Return to Gateway</a>
+        </div>
+    </header>
+
+    <!-- Section A: Question Bank Publisher & Repository -->
+    <main id="panelBank" class="console-panel active">
+        <!-- New Question Form -->
+        <section class="card-surface">
+            <div class="card-header-bar">
+                <div>
+                    <h2 class="card-title">Publish New Assessment Question</h2>
+                    <p class="card-description">Create standardized multiple choice question items and allocate mark weightage.</p>
+                </div>
+                <span class="pill-badge pill-tonal">Automated Database Synchronization</span>
+            </div>
+            <form id="authorQuestionForm" onsubmit="handleCreateQuestion(event)">
+                <div class="form-row">
+                    <div class="form-field">
+                        <label class="field-label" for="subjectField">Category / Subject</label>
+                        <input type="text" id="subjectField" class="input-pill" placeholder="e.g. DevOps &amp; CI/CD" required>
+                    </div>
+                    <div class="form-field">
+                        <label class="field-label" for="marksField">Marks Weightage</label>
+                        <input type="number" id="marksField" class="input-pill" value="4" min="1" max="20" required>
+                    </div>
+                    <div class="form-field full-span">
+                        <label class="field-label" for="promptField">Question Statement Prompt</label>
+                        <textarea id="promptField" class="textarea-rounded" placeholder="Enter clear, verifiable assessment statement..." required></textarea>
+                    </div>
+                    <div class="form-field">
+                        <label class="field-label" for="optAField">Option A</label>
+                        <input type="text" id="optAField" class="input-pill" placeholder="First option response" required>
+                    </div>
+                    <div class="form-field">
+                        <label class="field-label" for="optBField">Option B</label>
+                        <input type="text" id="optBField" class="input-pill" placeholder="Second option response" required>
+                    </div>
+                    <div class="form-field">
+                        <label class="field-label" for="optCField">Option C</label>
+                        <input type="text" id="optCField" class="input-pill" placeholder="Third option response" required>
+                    </div>
+                    <div class="form-field">
+                        <label class="field-label" for="optDField">Option D</label>
+                        <input type="text" id="optDField" class="input-pill" placeholder="Fourth option response" required>
+                    </div>
+                    <div class="form-field full-span">
+                        <label class="field-label" for="correctOptionField">Designated Correct Option</label>
+                        <select id="correctOptionField" class="select-pill" required>
+                            <option value="1">Option A</option>
+                            <option value="2">Option B</option>
+                            <option value="3">Option C</option>
+                            <option value="4">Option D</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: flex-end;">
+                    <button type="submit" class="btn-pill btn-primary btn-lg">Publish Question to Bank</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Question Repository Table -->
+        <section class="card-surface">
+            <div class="card-header-bar">
+                <div>
+                    <h2 class="card-title">Active Question Repository</h2>
+                    <p class="card-description">Live inventory of questions currently delivered across candidate assessments.</p>
+                </div>
+                <button class="btn-pill btn-secondary btn-sm" onclick="loadFacultyQuestions()">Refresh Repository</button>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">ID</th>
+                            <th style="width: 160px;">Subject</th>
+                            <th>Question Details</th>
+                            <th style="width: 120px;">Correct</th>
+                            <th style="width: 80px;">Marks</th>
+                            <th style="width: 100px; text-align: center;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="facultyQuestionsTbody">
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 36px;">Loading repository records...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Section B: Live Candidate Submissions & Merit List -->
+    <section id="panelMerit" class="console-panel">
+        <!-- Overview Metrics -->
+        <div class="metrics-overview-row">
+            <div class="metric-card-box">
+                <div class="metric-card-number" id="metricTotalSubmissions">0</div>
+                <div class="metric-card-caption">Total Attempt Submissions</div>
+            </div>
+            <div class="metric-card-box">
+                <div class="metric-card-number" style="color: var(--success);" id="metricPassRate">0%</div>
+                <div class="metric-card-caption">Assessment Pass Rate</div>
+            </div>
+            <div class="metric-card-box">
+                <div class="metric-card-number" style="color: var(--primary);" id="metricAverageScore">0.0</div>
+                <div class="metric-card-caption">Mean Candidate Score</div>
+            </div>
+        </div>
+
+        <!-- Candidate Submissions Table -->
+        <div class="card-surface">
+            <div class="card-header-bar">
+                <div>
+                    <h2 class="card-title">Candidate Audit &amp; Merit Log</h2>
+                    <p class="card-description">Chronological ledger of student evaluations persisted in MySQL database.</p>
+                </div>
+                <button class="btn-pill btn-secondary btn-sm" onclick="loadFacultyAttempts()">Refresh Data</button>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Candidate Name</th>
+                            <th>Roll Number</th>
+                            <th>Score Obtained</th>
+                            <th>Accuracy</th>
+                            <th>Breakdown (C/W/S)</th>
+                            <th>Time Elapsed</th>
+                            <th>Status Badge</th>
+                            <th>Submitted Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="facultyAttemptsTbody">
+                        <tr>
+                            <td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 36px;">Loading candidate records...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Toast -->
+<div class="portal-toast" id="facultyToast">Action completed</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchMetadata();
+        loadFacultyQuestions();
+    });
+
+    function showToast(msg) {
+        const t = document.getElementById('facultyToast');
+        t.textContent = msg;
+        t.style.display = 'block';
+        setTimeout(() => { t.style.display = 'none'; }, 3200);
+    }
+
+    function switchConsoleTab(tabKey) {
+        document.getElementById('btnTabBank').classList.remove('active');
+        document.getElementById('btnTabMerit').classList.remove('active');
+        document.getElementById('panelBank').classList.remove('active');
+        document.getElementById('panelMerit').classList.remove('active');
+
+        if (tabKey === 'bank') {
+            document.getElementById('btnTabBank').classList.add('active');
+            document.getElementById('panelBank').classList.add('active');
+            loadFacultyQuestions();
+        } else {
+            document.getElementById('btnTabMerit').classList.add('active');
+            document.getElementById('panelMerit').classList.add('active');
+            loadFacultyAttempts();
+        }
+    }
+
+    function fetchMetadata() {
+        fetch('/api/meta')
+            .then(res => res.json())
+            .then(data => {
+                if (data.buildVersion) {
+                    document.getElementById('facultyVersionBadge').textContent = 'Release: ' + data.buildVersion;
+                }
+            })
+            .catch(() => {});
+    }
+
+    function loadFacultyQuestions() {
+        const tbody = document.getElementById('facultyQuestionsTbody');
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 36px;">Loading questions...</td></tr>';
+
+        fetch('/api/questions')
+            .then(res => res.json())
+            .then(list => {
+                if (!list || list.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 36px;">No questions found in bank.</td></tr>';
+                    return;
+                }
+                const optMap = { 1: 'Option A', 2: 'Option B', 3: 'Option C', 4: 'Option D' };
+                tbody.innerHTML = '';
+                list.forEach(q => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td style="color: var(--text-tertiary); font-weight: 700;">#${q.id}</td>
+                        <td><span class="pill-badge pill-tonal">${escapeHtml(q.subject || 'General')}</span></td>
+                        <td>
+                            <div style="font-weight: 600; margin-bottom: 4px;">${escapeHtml(q.questionText)}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                                A: ${escapeHtml(q.optionA)} | B: ${escapeHtml(q.optionB)} | C: ${escapeHtml(q.optionC)} | D: ${escapeHtml(q.optionD)}
+                            </div>
+                        </td>
+                        <td><span class="pill-badge pill-version">${optMap[q.correctOption] || 'N/A'}</span></td>
+                        <td style="font-weight: 600;">${q.marks} pts</td>
+                        <td style="text-align: center;">
+                            <button class="btn-pill btn-danger btn-sm" onclick="removeQuestion(${q.id})">Remove</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            })
+            .catch(() => {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--danger); padding: 36px;">Failed to load questions repository.</td></tr>';
+            });
+    }
+
+    function handleCreateQuestion(e) {
+        e.preventDefault();
+
+        const payload = {
+            subject: document.getElementById('subjectField').value.trim(),
+            marks: parseInt(document.getElementById('marksField').value, 10) || 4,
+            questionText: document.getElementById('promptField').value.trim(),
+            optionA: document.getElementById('optAField').value.trim(),
+            optionB: document.getElementById('optBField').value.trim(),
+            optionC: document.getElementById('optCField').value.trim(),
+            optionD: document.getElementById('optDField').value.trim(),
+            correctOption: parseInt(document.getElementById('correctOptionField').value, 10)
+        };
+
+        fetch('/api/questions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => {
+            if (!res.ok) throw new Error('Save failed');
+            return res.json();
+        })
+        .then(() => {
+            showToast('New question published to bank successfully.');
+            document.getElementById('authorQuestionForm').reset();
+            document.getElementById('marksField').value = 4;
+            loadFacultyQuestions();
+        })
+        .catch(() => {
+            showToast('Failed to publish question. Please check server.');
+        });
+    }
+
+    function removeQuestion(id) {
+        if (!confirm('Remove question #' + id + ' from active pool?')) return;
+
+        fetch('/api/questions/' + id, { method: 'DELETE' })
+            .then(res => {
+                if (res.ok) {
+                    showToast('Question #' + id + ' removed.');
+                    loadFacultyQuestions();
+                } else {
+                    showToast('Failed to remove question.');
+                }
+            })
+            .catch(() => showToast('Communication error.'));
+    }
+
+    function loadFacultyAttempts() {
+        const tbody = document.getElementById('facultyAttemptsTbody');
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 36px;">Loading attempts...</td></tr>';
+
+        fetch('/api/attempts')
+            .then(res => res.json())
+            .then(list => {
+                if (!list || list.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 36px;">No candidate submissions recorded.</td></tr>';
+                    updateAuditMetrics([]);
+                    return;
+                }
+
+                updateAuditMetrics(list);
+                tbody.innerHTML = '';
+                list.forEach(att => {
+                    const row = document.createElement('tr');
+
+                    let statusClass = 'pill-fail';
+                    if (att.resultStatus === 'PASS') statusClass = 'pill-pass';
+                    else if (att.resultStatus === 'TIMEOUT') statusClass = 'pill-timeout';
+
+                    const pct = att.maxMarks > 0 ? ((att.scoreObtained / att.maxMarks) * 100).toFixed(1) + '%' : '0.0%';
+                    const timeStr = att.submittedAt ? new Date(att.submittedAt).toLocaleString() : 'N/A';
+
+                    row.innerHTML = `
+                        <td style="font-weight: 700;">${escapeHtml(att.studentName)}</td>
+                        <td style="color: var(--text-secondary); font-family: monospace;">${escapeHtml(att.rollNo)}</td>
+                        <td><strong style="color: var(--text-primary); font-size: 1rem;">${att.scoreObtained}</strong> / ${att.maxMarks}</td>
+                        <td style="color: var(--primary); font-weight: 700;">${pct}</td>
+                        <td style="font-size: 0.82rem; color: var(--text-secondary);">
+                            <span style="color: var(--success); font-weight: 700;">${att.correctCount}C</span> / 
+                            <span style="color: var(--danger); font-weight: 700;">${att.wrongCount}W</span> / 
+                            <span>${att.skippedCount}S</span>
+                        </td>
+                        <td>${att.timeTakenSeconds}s</td>
+                        <td><span class="pill-badge ${statusClass}">${att.resultStatus}</span></td>
+                        <td style="font-size: 0.8rem; color: var(--text-tertiary);">${timeStr}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            })
+            .catch(() => {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--danger); padding: 36px;">Failed to load candidate logs.</td></tr>';
+            });
+    }
+
+    function updateAuditMetrics(list) {
+        const total = list.length;
+        document.getElementById('metricTotalSubmissions').textContent = total;
+
+        if (total === 0) {
+            document.getElementById('metricPassRate').textContent = '0%';
+            document.getElementById('metricAverageScore').textContent = '0.0';
+            return;
+        }
+
+        const passCount = list.filter(a => a.resultStatus === 'PASS').length;
+        const passRate = ((passCount / total) * 100).toFixed(1);
+        document.getElementById('metricPassRate').textContent = passRate + '%';
+
+        const totalScore = list.reduce((acc, curr) => acc + curr.scoreObtained, 0);
+        const avgScore = (totalScore / total).toFixed(1);
+        document.getElementById('metricAverageScore').textContent = avgScore;
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+</script>
+</body>
+</html>

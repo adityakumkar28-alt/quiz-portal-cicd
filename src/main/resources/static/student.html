@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Examination Portal - EduPulse Assessment Cloud</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .timer-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: var(--primary);
+            color: #FFFFFF;
+            padding: 8px 20px;
+            border-radius: var(--radius-pill);
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            box-shadow: var(--shadow-btn);
+        }
+
+        .timer-pill.urgent {
+            background-color: var(--danger);
+            animation: pulse-timer 1s infinite alternate;
+        }
+
+        @keyframes pulse-timer {
+            from { opacity: 1; }
+            to { opacity: 0.6; }
+        }
+
+        /* Question Cards */
+        .question-item {
+            background-color: var(--bg-surface);
+            border-radius: var(--radius-card);
+            padding: 32px 36px;
+            box-shadow: var(--shadow-card);
+            margin-bottom: 24px;
+            border: none;
+            transition: transform 0.2s ease;
+        }
+
+        .question-meta-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .question-number-pill {
+            font-size: 0.78rem;
+            font-weight: 700;
+            background-color: var(--primary-light);
+            color: var(--primary);
+            padding: 4px 14px;
+            border-radius: var(--radius-pill);
+            text-transform: uppercase;
+        }
+
+        .subject-pill {
+            font-size: 0.78rem;
+            font-weight: 600;
+            background-color: var(--bg-tonal);
+            color: var(--text-secondary);
+            padding: 4px 14px;
+            border-radius: var(--radius-pill);
+        }
+
+        .question-statement {
+            font-size: 1.12rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.55;
+            margin-bottom: 22px;
+        }
+
+        .options-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .option-choice {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background-color: var(--bg-canvas);
+            border-radius: var(--radius-inner);
+            padding: 14px 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+            font-size: 0.94rem;
+            color: var(--text-primary);
+        }
+
+        .option-choice:hover {
+            background-color: #EBF0FA;
+        }
+
+        .option-choice.selected {
+            background-color: #E8EEFF;
+            color: #0F3CC9;
+            font-weight: 600;
+        }
+
+        .option-choice input[type="radio"] {
+            accent-color: var(--primary);
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .question-bottom-actions {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-text-clear {
+            background: none;
+            border: none;
+            color: var(--text-tertiary);
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: var(--radius-pill);
+            transition: all 0.2s ease;
+        }
+
+        .btn-text-clear:hover {
+            color: var(--danger);
+            background-color: var(--danger-light);
+        }
+
+        /* Instant Scorecard */
+        .scorecard-view {
+            display: none;
+            background-color: var(--bg-surface);
+            border-radius: var(--radius-card);
+            padding: 48px 36px;
+            box-shadow: var(--shadow-card);
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .score-big {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            letter-spacing: -0.03em;
+            margin: 12px 0 4px;
+        }
+
+        .score-subline {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+
+        .scorecard-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 16px;
+            max-width: 680px;
+            margin: 0 auto 36px;
+        }
+
+        .metric-box {
+            background-color: var(--bg-canvas);
+            border-radius: var(--radius-inner);
+            padding: 20px 14px;
+        }
+
+        .metric-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .metric-label {
+            font-size: 0.74rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text-secondary);
+        }
+
+        .submit-bar {
+            background-color: var(--bg-surface);
+            border-radius: var(--radius-card);
+            padding: 28px 36px;
+            box-shadow: var(--shadow-card);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+
+<div class="site-wrap">
+    <!-- Top Bar -->
+    <header class="nav-header">
+        <div class="brand-block">
+            <div class="brand-dot"></div>
+            <span class="brand-text">EduPulse Assessment Cloud</span>
+        </div>
+        <div class="nav-links">
+            <span class="pill-badge pill-version" id="studentVersionBadge">Release: v1.0</span>
+            <div class="timer-pill" id="studentCountdownTimer">Time Left: 02:00</div>
+            <a href="index.html" class="nav-link">Return to Gateway</a>
+        </div>
+    </header>
+
+    <!-- Scorecard Summary (Shown on Submit) -->
+    <section class="scorecard-view" id="scorecardSection">
+        <div id="scorecardStatusBadge" class="pill-badge pill-pass" style="font-size: 1rem; padding: 8px 24px;">PASS</div>
+        <div class="score-big" id="scorecardScoreDisplay">0 / 0</div>
+        <div class="score-subline" id="scorecardSubline">Assessment score calculated with negative marking rules</div>
+
+        <div class="scorecard-metrics">
+            <div class="metric-box">
+                <div class="metric-value" style="color: var(--success);" id="scoreCorrectVal">0</div>
+                <div class="metric-label">Correct (+4)</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-value" style="color: var(--danger);" id="scoreWrongVal">0</div>
+                <div class="metric-label">Wrong (-1)</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-value" style="color: var(--text-tertiary);" id="scoreSkippedVal">0</div>
+                <div class="metric-label">Unattempted</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-value" style="color: var(--primary);" id="scoreTimeVal">0s</div>
+                <div class="metric-label">Time Elapsed</div>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: center; gap: 14px;">
+            <button class="btn-pill btn-primary" onclick="resetStudentExam()">Attempt Fresh Examination</button>
+            <a href="index.html" class="btn-pill btn-secondary">Exit to Gateway</a>
+        </div>
+    </section>
+
+    <!-- Candidate Details Block -->
+    <section class="card-surface" id="candidateInfoSection">
+        <div class="card-header-bar">
+            <div>
+                <h2 class="card-title">Candidate Verification</h2>
+                <p class="card-description">Enter your registered details before proceeding with question responses.</p>
+            </div>
+            <span class="pill-badge pill-tonal">Standard Negative Marking: +4 / -1</span>
+        </div>
+        <div class="form-row">
+            <div class="form-field">
+                <label class="field-label" for="studentFullName">Candidate Full Name</label>
+                <input type="text" id="studentFullName" class="input-pill" placeholder="e.g. Aditya Sharma" required>
+            </div>
+            <div class="form-field">
+                <label class="field-label" for="studentRollNumber">Enrollment / Roll ID</label>
+                <input type="text" id="studentRollNumber" class="input-pill" placeholder="e.g. CS-2026-401" required>
+            </div>
+        </div>
+    </section>
+
+    <!-- Assessment Questions Container -->
+    <section id="questionsContainer">
+        <div class="card-surface" style="text-align: center; color: var(--text-secondary); padding: 48px;">
+            Loading assessment questions from repository...
+        </div>
+    </section>
+
+    <!-- Submission Bar -->
+    <section class="submit-bar" id="studentSubmitBar">
+        <div>
+            <div style="font-weight: 700; font-size: 1rem; color: var(--text-primary);">Finish &amp; Submit Assessment</div>
+            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px;">Ensure all questions are reviewed. Negative marks apply to incorrect answers.</div>
+        </div>
+        <button class="btn-pill btn-primary btn-lg" id="btnSubmitAssessment" onclick="handleStudentSubmit()">Submit Assessment</button>
+    </section>
+</div>
+
+<!-- Toast -->
+<div class="portal-toast" id="studentToast">Notification</div>
+
+<script>
+    let assessmentQuestions = [];
+    let studentAnswers = {};
+    let totalSeconds = 120;
+    let secondsLeft = 120;
+    let timerRef = null;
+    let examSubmitted = false;
+    let examStartTime = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchMetadata();
+        fetchQuestions();
+        startExamTimer();
+    });
+
+    function showToast(text) {
+        const t = document.getElementById('studentToast');
+        t.textContent = text;
+        t.style.display = 'block';
+        setTimeout(() => { t.style.display = 'none'; }, 3200);
+    }
+
+    function fetchMetadata() {
+        fetch('/api/meta')
+            .then(res => res.json())
+            .then(data => {
+                if (data.buildVersion) {
+                    document.getElementById('studentVersionBadge').textContent = 'Release: ' + data.buildVersion;
+                }
+            })
+            .catch(() => {});
+    }
+
+    function startExamTimer() {
+        if (timerRef) clearInterval(timerRef);
+        secondsLeft = totalSeconds;
+        examStartTime = Date.now();
+        examSubmitted = false;
+        updateTimerDisplay();
+
+        timerRef = setInterval(() => {
+            if (secondsLeft > 0 && !examSubmitted) {
+                secondsLeft--;
+                updateTimerDisplay();
+                if (secondsLeft === 0) {
+                    clearInterval(timerRef);
+                    autoSubmitTimeout();
+                }
+            }
+        }, 1000);
+    }
+
+    function updateTimerDisplay() {
+        const timerEl = document.getElementById('studentCountdownTimer');
+        const m = Math.floor(secondsLeft / 60);
+        const s = secondsLeft % 60;
+        const formatted = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        timerEl.textContent = 'Time Left: ' + formatted;
+
+        if (secondsLeft <= 25) {
+            timerEl.classList.add('urgent');
+        } else {
+            timerEl.classList.remove('urgent');
+        }
+    }
+
+    function autoSubmitTimeout() {
+        if (!examSubmitted) {
+            showToast('Time limit reached. Auto-submitting assessment.');
+            handleStudentSubmit(true);
+        }
+    }
+
+    function fetchQuestions() {
+        fetch('/api/questions')
+            .then(res => res.json())
+            .then(data => {
+                assessmentQuestions = data;
+                renderQuestions();
+            })
+            .catch(() => {
+                document.getElementById('questionsContainer').innerHTML =
+                    '<div class="card-surface" style="text-align: center; color: var(--danger);">Failed to load questions. Please check connection.</div>';
+            });
+    }
+
+    function renderQuestions() {
+        const c = document.getElementById('questionsContainer');
+        if (!assessmentQuestions || assessmentQuestions.length === 0) {
+            c.innerHTML = '<div class="card-surface" style="text-align: center; color: var(--text-secondary);">No questions currently active in the repository.</div>';
+            return;
+        }
+
+        c.innerHTML = '';
+        assessmentQuestions.forEach((q, idx) => {
+            const card = document.createElement('article');
+            card.className = 'question-item';
+            card.id = 'qitem-' + q.id;
+
+            const selectedOption = studentAnswers[q.id] || 0;
+
+            const opts = [
+                { num: 1, text: q.optionA, letter: 'A' },
+                { num: 2, text: q.optionB, letter: 'B' },
+                { num: 3, text: q.optionC, letter: 'C' },
+                { num: 4, text: q.optionD, letter: 'D' }
+            ];
+
+            let optsHtml = '';
+            opts.forEach(opt => {
+                const isSelected = selectedOption === opt.num;
+                const selectedClass = isSelected ? 'selected' : '';
+                const isChecked = isSelected ? 'checked' : '';
+
+                optsHtml += `
+                    <label class="option-choice ${selectedClass}" id="opt-choice-${q.id}-${opt.num}">
+                        <input type="radio" name="sq_${q.id}" value="${opt.num}" ${isChecked}
+                               onchange="chooseOption(${q.id}, ${opt.num})">
+                        <span><strong>${opt.letter}.</strong> ${escapeHtml(opt.text)}</span>
+                    </label>
+                `;
+            });
+
+            card.innerHTML = `
+                <div class="question-meta-bar">
+                    <span class="question-number-pill">Question ${idx + 1} of ${assessmentQuestions.length}</span>
+                    <span class="subject-pill">${escapeHtml(q.subject || 'General')} (${q.marks} Marks)</span>
+                </div>
+                <div class="question-statement">${escapeHtml(q.questionText)}</div>
+                <div class="options-group">
+                    ${optsHtml}
+                </div>
+                <div class="question-bottom-actions">
+                    <button type="button" class="btn-text-clear" onclick="clearQuestionOption(${q.id})">Clear Selection</button>
+                </div>
+            `;
+            c.appendChild(card);
+        });
+    }
+
+    function chooseOption(qid, optNum) {
+        if (examSubmitted) return;
+        studentAnswers[qid] = optNum;
+
+        for (let i = 1; i <= 4; i++) {
+            const choice = document.getElementById(`opt-choice-${qid}-${i}`);
+            if (choice) {
+                if (i === optNum) {
+                    choice.classList.add('selected');
+                } else {
+                    choice.classList.remove('selected');
+                }
+            }
+        }
+    }
+
+    function clearQuestionOption(qid) {
+        if (examSubmitted) return;
+        delete studentAnswers[qid];
+        const radios = document.getElementsByName('sq_' + qid);
+        radios.forEach(r => r.checked = false);
+
+        for (let i = 1; i <= 4; i++) {
+            const choice = document.getElementById(`opt-choice-${qid}-${i}`);
+            if (choice) {
+                choice.classList.remove('selected');
+            }
+        }
+    }
+
+    function handleStudentSubmit(isTimeout = false) {
+        if (examSubmitted) return;
+
+        const nameInput = document.getElementById('studentFullName');
+        const rollInput = document.getElementById('studentRollNumber');
+
+        let name = nameInput.value.trim();
+        let roll = rollInput.value.trim();
+
+        if (!name) {
+            name = 'Candidate ' + Math.floor(1000 + Math.random() * 9000);
+            nameInput.value = name;
+        }
+        if (!roll) {
+            roll = 'ROLL-' + Math.floor(100 + Math.random() * 900);
+            rollInput.value = roll;
+        }
+
+        const elapsedSec = Math.max(0, Math.round((Date.now() - examStartTime) / 1000));
+        const timeTaken = isTimeout ? (totalSeconds + 1) : Math.min(elapsedSec, totalSeconds);
+
+        const payload = {
+            studentName: name,
+            rollNo: roll,
+            timeTakenSeconds: timeTaken,
+            allowedTimeSeconds: totalSeconds,
+            answers: studentAnswers
+        };
+
+        const submitBtn = document.getElementById('btnSubmitAssessment');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+
+        fetch('/api/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => {
+            if (!res.ok) throw new Error('Submission failed');
+            return res.json();
+        })
+        .then(attempt => {
+            examSubmitted = true;
+            if (timerRef) clearInterval(timerRef);
+            renderScorecard(attempt);
+            showToast('Assessment submitted successfully.');
+        })
+        .catch(() => {
+            showToast('Network error while submitting. Please check connection.');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Assessment';
+        });
+    }
+
+    function renderScorecard(attempt) {
+        const card = document.getElementById('scorecardSection');
+        const statusBadge = document.getElementById('scorecardStatusBadge');
+        const scoreDisplay = document.getElementById('scorecardScoreDisplay');
+        const subline = document.getElementById('scorecardSubline');
+
+        statusBadge.className = 'pill-badge';
+        if (attempt.resultStatus === 'PASS') {
+            statusBadge.classList.add('pill-pass');
+            statusBadge.textContent = 'STATUS: PASS';
+        } else if (attempt.resultStatus === 'TIMEOUT') {
+            statusBadge.classList.add('pill-timeout');
+            statusBadge.textContent = 'STATUS: TIMEOUT';
+        } else {
+            statusBadge.classList.add('pill-fail');
+            statusBadge.textContent = 'STATUS: FAIL';
+        }
+
+        const pct = attempt.maxMarks > 0 ? ((attempt.scoreObtained / attempt.maxMarks) * 100).toFixed(1) : '0.0';
+        scoreDisplay.textContent = `${attempt.scoreObtained} / ${attempt.maxMarks}`;
+        subline.textContent = `Candidate Accuracy: ${pct}% | Time Elapsed: ${attempt.timeTakenSeconds}s of ${attempt.allowedTimeSeconds}s`;
+
+        document.getElementById('scoreCorrectVal').textContent = attempt.correctCount;
+        document.getElementById('scoreWrongVal').textContent = attempt.wrongCount;
+        document.getElementById('scoreSkippedVal').textContent = attempt.skippedCount;
+        document.getElementById('scoreTimeVal').textContent = attempt.timeTakenSeconds + 's';
+
+        card.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        document.getElementById('candidateInfoSection').style.opacity = '0.6';
+        document.getElementById('studentSubmitBar').style.display = 'none';
+    }
+
+    function resetStudentExam() {
+        examSubmitted = false;
+        studentAnswers = {};
+        document.getElementById('scorecardSection').style.display = 'none';
+        document.getElementById('candidateInfoSection').style.opacity = '1';
+        document.getElementById('studentSubmitBar').style.display = 'flex';
+        renderQuestions();
+        startExamTimer();
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+</script>
+</body>
+</html>
