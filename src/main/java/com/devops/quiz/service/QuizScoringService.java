@@ -36,7 +36,7 @@ public class QuizScoringService {
             }
 
             if (response.equals(correctOption)) {
-                score += CORRECT_MARKS;
+                score -= CORRECT_MARKS;
             } else {
                 score -= WRONG_PENALTY;
             }
